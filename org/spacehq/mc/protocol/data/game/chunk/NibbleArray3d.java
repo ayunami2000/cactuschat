@@ -1,0 +1,77 @@
+// 
+// Decompiled by Procyon v0.5.36
+// 
+
+package org.spacehq.mc.protocol.data.game.chunk;
+
+import java.util.Arrays;
+import org.spacehq.packetlib.io.NetOutput;
+import java.io.IOException;
+import org.spacehq.packetlib.io.NetInput;
+
+public class NibbleArray3d
+{
+    private byte[] data;
+    
+    public NibbleArray3d(final int size) {
+        this.data = new byte[size >> 1];
+    }
+    
+    public NibbleArray3d(final byte[] array) {
+        this.data = array;
+    }
+    
+    public NibbleArray3d(final NetInput in, final int size) throws IOException {
+        this.data = in.readBytes(size);
+    }
+    
+    public void write(final NetOutput out) throws IOException {
+        out.writeBytes(this.data);
+    }
+    
+    public byte[] getData() {
+        return this.data;
+    }
+    
+    public int get(final int x, final int y, final int z) {
+        final int key = y << 8 | z << 4 | x;
+        final int index = key >> 1;
+        final int part = key & 0x1;
+        return (part == 0) ? (this.data[index] & 0xF) : (this.data[index] >> 4 & 0xF);
+    }
+    
+    public void set(final int x, final int y, final int z, final int val) {
+        final int key = y << 8 | z << 4 | x;
+        final int index = key >> 1;
+        final int part = key & 0x1;
+        if (part == 0) {
+            this.data[index] = (byte)((this.data[index] & 0xF0) | (val & 0xF));
+        }
+        else {
+            this.data[index] = (byte)((this.data[index] & 0xF) | (val & 0xF) << 4);
+        }
+    }
+    
+    public void fill(final int val) {
+        for (int index = 0; index < this.data.length << 1; ++index) {
+            final int ind = index >> 1;
+            final int part = index & 0x1;
+            if (part == 0) {
+                this.data[ind] = (byte)((this.data[ind] & 0xF0) | (val & 0xF));
+            }
+            else {
+                this.data[ind] = (byte)((this.data[ind] & 0xF) | (val & 0xF) << 4);
+            }
+        }
+    }
+    
+    @Override
+    public boolean equals(final Object o) {
+        return this == o || (o instanceof NibbleArray3d && Arrays.equals(this.data, ((NibbleArray3d)o).data));
+    }
+    
+    @Override
+    public int hashCode() {
+        return Arrays.hashCode(this.data);
+    }
+}
